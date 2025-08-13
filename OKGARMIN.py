@@ -58,13 +58,22 @@ def update_script(new_version):
         script_path = os.path.realpath(__file__)
         backup_path = script_path + ".bak"
 
+        # Création de la sauvegarde
         shutil.copyfile(script_path, backup_path)
         print(f"Sauvegarde du script existant : {backup_path}")
 
+        # Écriture du nouveau script
         with open(script_path, "wb") as f:
             f.write(response.content)
 
-        print(f"Mise à jour vers la version {new_version} terminée ! Relancez le script.")
+        print(f"Mise à jour vers la version {new_version} terminée !")
+
+        # Suppression automatique de l'ancien backup
+        if os.path.exists(backup_path):
+            os.remove(backup_path)
+            print(f"Ancien backup {backup_path} supprimé.")
+
+        print("Relancez le script pour appliquer les changements.")
         sys.exit(0)
     except requests.RequestException as e:
         print(f"Erreur lors de la mise à jour : {e}")
@@ -176,3 +185,4 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
+
