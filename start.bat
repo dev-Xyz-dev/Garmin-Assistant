@@ -1,0 +1,2 @@
+python OKGARMIN.py
+pause
