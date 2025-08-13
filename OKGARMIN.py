@@ -1,3 +1,16 @@
+import sys
+import subprocess
+
+# ──────────────── 1️⃣ Installer les dépendances manquantes ────────────────
+required_modules = ["keyboard", "playsound", "sounddevice", "vosk", "requests"]
+for module in required_modules:
+    try:
+        __import__(module)
+    except ImportError:
+        print(f"Module '{module}' manquant, installation...")
+        subprocess.check_call([sys.executable, "-m", "pip", "install", module])
+
+# ──────────────── 2️⃣ Imports ────────────────
 import keyboard
 from playsound import playsound
 import time
@@ -10,15 +23,22 @@ from vosk import Model, KaldiRecognizer
 import os
 import webbrowser
 import requests
-import sys
 import shutil
 
-__version__ = "1.0.0"
+# ──────────────── 3️⃣ Configuration du script ────────────────
+__version__ = "1.0.2"
 VERSION_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/version.txt"
 SCRIPT_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/OKGARMIN.py"
 
+CONFIG_FILE = Path("config.json")
+TRIGGER_WAKE = "garmin"
+TRIGGER_CLIP = "la vidéo"
+TRIGGER_SNAP = "pornhub"
+AFTER_WAKE_TIMEOUT = 3.5
+MP3_PATH = str(Path(__file__).parent / "bip.mp3")
+
+# ──────────────── 4️⃣ Gestion des mises à jour ────────────────
 def check_for_updates():
-    """Vérifie la version en ligne et met à jour si nécessaire, sinon continue."""
     try:
         response = requests.get(VERSION_URL, timeout=5)
         response.raise_for_status()
@@ -32,7 +52,6 @@ def check_for_updates():
         print("Aucune connexion ou impossible de vérifier les mises à jour. Continuation offline...")
 
 def update_script(new_version):
-    """Télécharge et remplace le script actuel par la version distante en créant une sauvegarde."""
     try:
         response = requests.get(SCRIPT_URL)
         response.raise_for_status()
@@ -52,14 +71,7 @@ def update_script(new_version):
     except Exception as e:
         print(f"Erreur inattendue : {e}")
 
-
-CONFIG_FILE = Path("config.json")
-
-TRIGGER_WAKE = "garmin"
-TRIGGER_CLIP = "la vidéo"
-TRIGGER_SNAP = "pornhub"
-AFTER_WAKE_TIMEOUT = 3.5
-
+# ──────────────── 5️⃣ Configuration du micro ────────────────
 if CONFIG_FILE.exists():
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
         config = json.load(f)
@@ -77,20 +89,15 @@ if "mic_index" not in config:
     print(f"Micro {mic_index} sauvegardé dans {CONFIG_FILE}")
 else:
     mic_index = config["mic_index"]
-import requests
-import zipfile
-from pathlib import Path
-import os
 
+# ──────────────── 6️⃣ Téléchargement et extraction du modèle Vosk ────────────────
 MODEL_PATH = Path(__file__).parent / "vosk-model-small-fr-0.22"
 MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip"
 
-# Téléchargement et extraction du modèle si nécessaire
 if not MODEL_PATH.exists():
     zip_path = MODEL_PATH.with_suffix(".zip")
     print(f"Modèle introuvable, téléchargement depuis {MODEL_URL}...")
     
-    # Téléchargement
     with requests.get(MODEL_URL, stream=True) as r:
         r.raise_for_status()
         with open(zip_path, 'wb') as f:
@@ -98,24 +105,18 @@ if not MODEL_PATH.exists():
                 f.write(chunk)
     print(f"Téléchargement terminé : {zip_path}")
 
-    # Décompression
     print("Décompression du modèle...")
+    import zipfile
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(MODEL_PATH.parent)
 
-    # Suppression du zip
     os.remove(zip_path)
     print("ZIP supprimé, modèle prêt à l'emploi.")
 
-MODEL_PATH = Path(__file__).parent / "vosk-model-small-fr-0.22"
-if not MODEL_PATH.exists():
-    raise FileNotFoundError(f"Modèle introuvable : {MODEL_PATH}")
+# ──────────────── 7️⃣ Initialisation Vosk ────────────────
 model = Model(str(MODEL_PATH))
-
 recognizer = KaldiRecognizer(model, 16000)
 q = queue.Queue()
-
-MP3_PATH = str(Path(__file__).parent / "bip.mp3")
 
 def callback(indata, frames, time_info, status):
     if status:
@@ -124,7 +125,6 @@ def callback(indata, frames, time_info, status):
 
 def listen_for_phrase(timeout=3):
     start_time = time.time()
-    result_text = ""
     with sd.RawInputStream(samplerate=16000, blocksize=8000, device=mic_index,
                            dtype='int16', channels=1, callback=callback):
         while time.time() - start_time < timeout:
@@ -137,6 +137,7 @@ def listen_for_phrase(timeout=3):
         res = js.loads(recognizer.FinalResult())
         return res.get("text", "").lower()
 
+# ──────────────── 8️⃣ Boucle principale ────────────────
 def main():
     print("🎙 Assistant prêt. Dites 'Ok Garmin'.")
     state = "idle"
@@ -171,7 +172,7 @@ def main():
                 else:
                     print(f"Commande inconnue : {cmd}")
 
+# ──────────────── 9️⃣ Démarrage ────────────────
 if __name__ == "__main__":
     check_for_updates()
     main()
-
