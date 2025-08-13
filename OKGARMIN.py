@@ -1,4 +1,5 @@
 import sys
+import os
 import subprocess
 
 # ──────────────── 1️⃣ Installer les dépendances manquantes ────────────────
@@ -24,6 +25,11 @@ import os
 import webbrowser
 import requests
 import shutil
+# ────────────────Supp old ver────────────────
+bak_path = "OKGARMIN.py.bak"
+if os.path.exists(bak_path):
+    os.remove(bak_path)
+    print(f"Ancien backup supprimé : {bak_path}")
 
 # ──────────────── 3️⃣ Configuration du script ────────────────
 __version__ = "1.0.3"
@@ -185,5 +191,6 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
+
 
 
