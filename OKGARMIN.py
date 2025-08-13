@@ -19,7 +19,6 @@ import json
 from pathlib import Path
 import sounddevice as sd
 import queue
-import json as js
 from vosk import Model, KaldiRecognizer
 import webbrowser
 import requests
@@ -66,7 +65,6 @@ def download_file(url, dest):
 
 def update_script(new_version):
     try:
-        # Mise à jour du script
         response = requests.get(SCRIPT_URL)
         response.raise_for_status()
         script_path = Path(__file__).resolve()
@@ -155,11 +153,11 @@ def listen_for_phrase(timeout=3):
         while time.time() - start_time < timeout:
             data = q.get()
             if recognizer.AcceptWaveform(data):
-                res = js.loads(recognizer.Result())
+                res = json.loads(recognizer.Result())
                 result_text = res.get("text", "").lower()
                 if result_text:
                     return result_text
-        res = js.loads(recognizer.FinalResult())
+        res = json.loads(recognizer.FinalResult())
         return res.get("text", "").lower()
 
 # ──────────────── 8️⃣ Boucle principale ────────────────
@@ -173,7 +171,7 @@ def main():
             cmd = listen_for_phrase(timeout=5)
             if cmd and TRIGGER_WAKE in cmd:
                 print("Activation détectée")
-                playsound(MP3_PATH)
+                playsound(str(MP3_PATH))  # <-- correction Path -> str
                 state = "after_wake"
                 wake_time = time.time()
 
@@ -189,12 +187,12 @@ def main():
                 if TRIGGER_CLIP in cmd:
                     print("Commande détectée → '='")
                     keyboard.press_and_release('=')
-                    playsound(BIP_OK_PATH)
+                    playsound(str(BIP_OK_PATH))  # <-- correction Path -> str
                     state = "idle"
                 elif TRIGGER_SNAP in cmd:
                     print("Commande détectée → ouverture Ph")
                     webbrowser.open("https://pornhub.com")
-                    playsound(BIP_OK_PATH)
+                    playsound(str(BIP_OK_PATH))  # <-- correction Path -> str
                     state = "idle"
                 else:
                     print(f"Commande inconnue : {cmd}")
