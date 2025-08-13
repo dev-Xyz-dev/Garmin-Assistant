@@ -77,6 +77,35 @@ if "mic_index" not in config:
     print(f"Micro {mic_index} sauvegardé dans {CONFIG_FILE}")
 else:
     mic_index = config["mic_index"]
+import requests
+import zipfile
+from pathlib import Path
+import os
+
+MODEL_PATH = Path(__file__).parent / "vosk-model-small-fr-0.22"
+MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip"
+
+# Téléchargement et extraction du modèle si nécessaire
+if not MODEL_PATH.exists():
+    zip_path = MODEL_PATH.with_suffix(".zip")
+    print(f"Modèle introuvable, téléchargement depuis {MODEL_URL}...")
+    
+    # Téléchargement
+    with requests.get(MODEL_URL, stream=True) as r:
+        r.raise_for_status()
+        with open(zip_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    print(f"Téléchargement terminé : {zip_path}")
+
+    # Décompression
+    print("Décompression du modèle...")
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(MODEL_PATH.parent)
+
+    # Suppression du zip
+    os.remove(zip_path)
+    print("ZIP supprimé, modèle prêt à l'emploi.")
 
 MODEL_PATH = Path(__file__).parent / "vosk-model-small-fr-0.22"
 if not MODEL_PATH.exists():
@@ -145,3 +174,4 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
+
