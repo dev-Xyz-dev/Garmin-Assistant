@@ -32,7 +32,7 @@ if os.path.exists(bak_path):
     print(f"Ancien backup supprimé : {bak_path}")
 
 # ──────────────── 3️⃣ Configuration du script ────────────────
-__version__ = "1.0.3"
+__version__ = "1.0.4"
 VERSION_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/version.txt"
 SCRIPT_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/OKGARMIN.py"
 
@@ -191,6 +191,7 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
+
 
 
 
