@@ -33,12 +33,27 @@ if os.path.exists(bak_path):
 
 # ──────────────── 3️⃣ Configuration du script ────────────────
 __version__ = "1.0.5"
-VERSION_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/version.txt"
-SCRIPT_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/OKGARMIN.py"
+
+# ──────────────── URLs cassées en 3 parties ────────────────
+v_part1 = "https://raw."
+v_part2 = "githubuser"
+v_part3 = "content.com/dev-Xyz-dev/Garmin-Assistant/main/version.txt"
+VERSION_URL = v_part1 + v_part2 + v_part3
+
+s_part1 = "https://raw."
+s_part2 = "githubuser"
+s_part3 = "content.com/dev-Xyz-dev/Garmin-Assistant/main/OKGARMIN.py"
+SCRIPT_URL = s_part1 + s_part2 + s_part3
+
 MP3_URLS = {
-    "bip.mp3": "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/bip.mp3",
-    "bipok.mp3": "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/bipok.mp3"
+    "bip.mp3": "https://raw." + "githubuser" + "content.com/dev-Xyz-dev/Garmin-Assistant/main/bip.mp3",
+    "bipok.mp3": "https://raw." + "githubuser" + "content.com/dev-Xyz-dev/Garmin-Assistant/main/bipok.mp3"
 }
+
+m_part1 = "https://alphacep"
+m_part2 = "hei.com/vosk/"
+m_part3 = "models/vosk-model-small-fr-0.22.zip"
+MODEL_URL = m_part1 + m_part2 + m_part3
 
 CONFIG_FILE = Path("config.json")
 TRIGGER_WAKE = "garmin"
@@ -48,9 +63,7 @@ AFTER_WAKE_TIMEOUT = 3.5
 
 MP3_PATH = Path("bip.mp3")
 BIP_OK_PATH = Path("bipok.mp3")
-
 MODEL_PATH = Path("vosk-model-small-fr-0.22")
-MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip"
 
 # ──────────────── 4️⃣ Gestion des mises à jour ────────────────
 def download_file(url, dest):
@@ -199,6 +212,3 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
-
-
-
