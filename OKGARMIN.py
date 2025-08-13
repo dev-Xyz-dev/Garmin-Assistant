@@ -8,13 +8,56 @@ import queue
 import json as js
 from vosk import Model, KaldiRecognizer
 import os
-import webbrowser 
+import webbrowser
+import requests
+import sys
+import shutil
+
+__version__ = "1.0.0"
+VERSION_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/version.txt"
+SCRIPT_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/OKGARMIN.py"
+
+def check_for_updates():
+    """Vérifie la version en ligne et met à jour si nécessaire, sinon continue."""
+    try:
+        response = requests.get(VERSION_URL, timeout=5)
+        response.raise_for_status()
+        remote_version = response.text.strip()
+        if remote_version > __version__:
+            print(f"\nNouvelle version disponible : {remote_version} (votre version : {__version__})")
+            update_script(remote_version)
+        else:
+            print(f"Vous utilisez la dernière version ({__version__}).\n")
+    except requests.RequestException:
+        print("Aucune connexion ou impossible de vérifier les mises à jour. Continuation offline...")
+
+def update_script(new_version):
+    """Télécharge et remplace le script actuel par la version distante en créant une sauvegarde."""
+    try:
+        response = requests.get(SCRIPT_URL)
+        response.raise_for_status()
+        script_path = os.path.realpath(__file__)
+        backup_path = script_path + ".bak"
+
+        shutil.copyfile(script_path, backup_path)
+        print(f"Sauvegarde du script existant : {backup_path}")
+
+        with open(script_path, "wb") as f:
+            f.write(response.content)
+
+        print(f"Mise à jour vers la version {new_version} terminée ! Relancez le script.")
+        sys.exit(0)
+    except requests.RequestException as e:
+        print(f"Erreur lors de la mise à jour : {e}")
+    except Exception as e:
+        print(f"Erreur inattendue : {e}")
+
 
 CONFIG_FILE = Path("config.json")
 
 TRIGGER_WAKE = "garmin"
 TRIGGER_CLIP = "la vidéo"
-TRIGGER_SNAP = "pornhub"  
+TRIGGER_SNAP = "pornhub"
 AFTER_WAKE_TIMEOUT = 3.5
 
 if CONFIG_FILE.exists():
@@ -93,11 +136,12 @@ def main():
                     keyboard.press_and_release('=')
                     state = "idle"
                 elif TRIGGER_SNAP in cmd:
-                    print("Commande détectée → ouverture Ph (petit cochon va)")
+                    print("Commande détectée → ouverture Ph")
                     webbrowser.open("https://pornhub.com")
                     state = "idle"
                 else:
                     print(f"Commande inconnue : {cmd}")
 
 if __name__ == "__main__":
+    check_for_updates()
     main()
