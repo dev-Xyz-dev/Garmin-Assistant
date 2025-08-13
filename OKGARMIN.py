@@ -21,29 +21,81 @@ import sounddevice as sd
 import queue
 import json as js
 from vosk import Model, KaldiRecognizer
-import os
 import webbrowser
 import requests
 import shutil
-# ────────────────Supp old ver────────────────
+import zipfile
+
+# ──────────────── Suppression ancien backup ────────────────
 bak_path = "OKGARMIN.py.bak"
 if os.path.exists(bak_path):
     os.remove(bak_path)
     print(f"Ancien backup supprimé : {bak_path}")
 
 # ──────────────── 3️⃣ Configuration du script ────────────────
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 VERSION_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/version.txt"
 SCRIPT_URL = "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/OKGARMIN.py"
+MP3_URLS = {
+    "bip.mp3": "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/bip.mp3",
+    "bipok.mp3": "https://raw.githubusercontent.com/dev-Xyz-dev/Garmin-Assistant/main/bipok.mp3"
+}
 
 CONFIG_FILE = Path("config.json")
 TRIGGER_WAKE = "garmin"
 TRIGGER_CLIP = "la vidéo"
 TRIGGER_SNAP = "pornhub"
 AFTER_WAKE_TIMEOUT = 3.5
-MP3_PATH = str(Path(__file__).parent / "bip.mp3")
+
+MP3_PATH = Path("bip.mp3")
+BIP_OK_PATH = Path("bipok.mp3")
+
+MODEL_PATH = Path("vosk-model-small-fr-0.22")
+MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip"
 
 # ──────────────── 4️⃣ Gestion des mises à jour ────────────────
+def download_file(url, dest):
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(dest, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
+    print(f"Téléchargé : {dest}")
+
+def update_script(new_version):
+    try:
+        # Mise à jour du script
+        response = requests.get(SCRIPT_URL)
+        response.raise_for_status()
+        script_path = Path(__file__).resolve()
+        backup_path = script_path.with_suffix(".bak")
+        shutil.copyfile(script_path, backup_path)
+        print(f"Sauvegarde du script existant : {backup_path}")
+        with open(script_path, "wb") as f:
+            f.write(response.content)
+        print(f"Script mis à jour vers {new_version}")
+
+        # Téléchargement fichiers MP3
+        for name, url in MP3_URLS.items():
+            download_file(url, Path(name))
+
+        # Téléchargement modèle Vosk si absent
+        if not MODEL_PATH.exists():
+            zip_path = MODEL_PATH.with_suffix(".zip")
+            print(f"Téléchargement du modèle Vosk depuis {MODEL_URL}")
+            download_file(MODEL_URL, zip_path)
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall(MODEL_PATH.parent)
+            os.remove(zip_path)
+            print("Modèle Vosk prêt à l'emploi.")
+
+        print("Mise à jour terminée ! Relancez le script.")
+        sys.exit(0)
+    except Exception as e:
+        print(f"Erreur lors de la mise à jour : {e}")
+
 def check_for_updates():
     try:
         response = requests.get(VERSION_URL, timeout=5)
@@ -56,35 +108,6 @@ def check_for_updates():
             print(f"Vous utilisez la dernière version ({__version__}).\n")
     except requests.RequestException:
         print("Aucune connexion ou impossible de vérifier les mises à jour. Continuation offline...")
-
-def update_script(new_version):
-    try:
-        response = requests.get(SCRIPT_URL)
-        response.raise_for_status()
-        script_path = os.path.realpath(__file__)
-        backup_path = script_path + ".bak"
-
-        # Création de la sauvegarde
-        shutil.copyfile(script_path, backup_path)
-        print(f"Sauvegarde du script existant : {backup_path}")
-
-        # Écriture du nouveau script
-        with open(script_path, "wb") as f:
-            f.write(response.content)
-
-        print(f"Mise à jour vers la version {new_version} terminée !")
-
-        # Suppression automatique de l'ancien backup
-        if os.path.exists(backup_path):
-            os.remove(backup_path)
-            print(f"Ancien backup {backup_path} supprimé.")
-
-        print("Relancez le script pour appliquer les changements.")
-        sys.exit(0)
-    except requests.RequestException as e:
-        print(f"Erreur lors de la mise à jour : {e}")
-    except Exception as e:
-        print(f"Erreur inattendue : {e}")
 
 # ──────────────── 5️⃣ Configuration du micro ────────────────
 if CONFIG_FILE.exists():
@@ -105,28 +128,15 @@ if "mic_index" not in config:
 else:
     mic_index = config["mic_index"]
 
-# ──────────────── 6️⃣ Téléchargement et extraction du modèle Vosk ────────────────
-MODEL_PATH = Path(__file__).parent / "vosk-model-small-fr-0.22"
-MODEL_URL = "https://alphacephei.com/vosk/models/vosk-model-small-fr-0.22.zip"
-
+# ──────────────── 6️⃣ Téléchargement modèle Vosk si absent ────────────────
 if not MODEL_PATH.exists():
     zip_path = MODEL_PATH.with_suffix(".zip")
-    print(f"Modèle introuvable, téléchargement depuis {MODEL_URL}...")
-    
-    with requests.get(MODEL_URL, stream=True) as r:
-        r.raise_for_status()
-        with open(zip_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
-    print(f"Téléchargement terminé : {zip_path}")
-
-    print("Décompression du modèle...")
-    import zipfile
+    print(f"Téléchargement modèle depuis {MODEL_URL}")
+    download_file(MODEL_URL, zip_path)
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(MODEL_PATH.parent)
-
     os.remove(zip_path)
-    print("ZIP supprimé, modèle prêt à l'emploi.")
+    print("Modèle prêt à l'emploi.")
 
 # ──────────────── 7️⃣ Initialisation Vosk ────────────────
 model = Model(str(MODEL_PATH))
@@ -179,10 +189,12 @@ def main():
                 if TRIGGER_CLIP in cmd:
                     print("Commande détectée → '='")
                     keyboard.press_and_release('=')
+                    playsound(BIP_OK_PATH)
                     state = "idle"
                 elif TRIGGER_SNAP in cmd:
                     print("Commande détectée → ouverture Ph")
                     webbrowser.open("https://pornhub.com")
+                    playsound(BIP_OK_PATH)
                     state = "idle"
                 else:
                     print(f"Commande inconnue : {cmd}")
@@ -191,7 +203,3 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
-
-
-
-
