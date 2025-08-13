@@ -26,9 +26,9 @@ import shutil
 import zipfile
 
 # ──────────────── Suppression ancien backup ────────────────
-bak_path = "OKGARMIN.py.bak"
-if os.path.exists(bak_path):
-    os.remove(bak_path)
+bak_path = Path("OKGARMIN.py.bak")
+if bak_path.exists():
+    bak_path.unlink()
     print(f"Ancien backup supprimé : {bak_path}")
 
 # ──────────────── 3️⃣ Configuration du script ────────────────
@@ -75,11 +75,9 @@ def update_script(new_version):
             f.write(response.content)
         print(f"Script mis à jour vers {new_version}")
 
-        # Téléchargement fichiers MP3
         for name, url in MP3_URLS.items():
             download_file(url, Path(name))
 
-        # Téléchargement modèle Vosk si absent
         if not MODEL_PATH.exists():
             zip_path = MODEL_PATH.with_suffix(".zip")
             print(f"Téléchargement du modèle Vosk depuis {MODEL_URL}")
@@ -171,7 +169,7 @@ def main():
             cmd = listen_for_phrase(timeout=5)
             if cmd and TRIGGER_WAKE in cmd:
                 print("Activation détectée")
-                playsound(str(MP3_PATH))  # <-- correction Path -> str
+                playsound(str(MP3_PATH))
                 state = "after_wake"
                 wake_time = time.time()
 
@@ -187,12 +185,12 @@ def main():
                 if TRIGGER_CLIP in cmd:
                     print("Commande détectée → '='")
                     keyboard.press_and_release('=')
-                    playsound(str(BIP_OK_PATH))  # <-- correction Path -> str
+                    playsound(str(BIP_OK_PATH))
                     state = "idle"
                 elif TRIGGER_SNAP in cmd:
                     print("Commande détectée → ouverture Ph")
                     webbrowser.open("https://pornhub.com")
-                    playsound(str(BIP_OK_PATH))  # <-- correction Path -> str
+                    playsound(str(BIP_OK_PATH))
                     state = "idle"
                 else:
                     print(f"Commande inconnue : {cmd}")
