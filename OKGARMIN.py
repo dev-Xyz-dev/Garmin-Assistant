@@ -26,7 +26,7 @@ import shutil
 import zipfile
 
 # ──────────────── Suppression ancien backup ────────────────
-bak_path = "OKGARMIN.bak"
+bak_path = "OKGARMIN.bak"  
 if os.path.exists(bak_path):
     os.remove(bak_path)
     print(f"Ancien backup supprimé : {bak_path}")
@@ -199,5 +199,6 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
+
 
 
