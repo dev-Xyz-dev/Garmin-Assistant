@@ -32,7 +32,7 @@ if os.path.exists(bak_path):
     print(f"Ancien backup supprimé : {bak_path}")
 
 # ──────────────── 3️⃣ Configuration du script ────────────────
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 # ──────────────── URLs cassées en 3 parties ────────────────
 v_part1 = "https://raw."
@@ -228,3 +228,4 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
+
