@@ -3,7 +3,7 @@ import os
 import subprocess
 
 # ──────────────── 1️⃣ Installer les dépendances manquantes ────────────────
-required_modules = ["keyboard", "playsound", "sounddevice", "vosk", "requests"]
+required_modules = ["keyboard", "playsound==1.2.2", "sounddevice", "vosk", "requests","pyaudio"]
 for module in required_modules:
     try:
         __import__(module)
@@ -212,4 +212,5 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
+
 
