@@ -3,7 +3,7 @@ import os
 import subprocess
 
 # ──────────────── 1️⃣ Installer les dépendances manquantes ────────────────
-required_modules = ["keyboard", "playsound", "sounddevice", "vosk", "requests", "pyaudio"]
+required_modules = ["keyboard", "playsound", "sounddevice", "vosk", "requests", "pyaudio", "pyttsx3"]
 for module in required_modules:
     try:
         __import__(module)
@@ -24,6 +24,7 @@ import webbrowser
 import requests
 import shutil
 import zipfile
+import pyttsx3
 
 # ──────────────── Suppression ancien backup ────────────────
 bak_path = "OKGARMIN.bak"  
@@ -61,13 +62,17 @@ TRIGGER_CLIP = "la vidéo"
 TRIGGER_SNAP = "pornhub"
 TRIGGER_SPOTIFY_PLAY = "pause"
 TRIGGER_SPOTIFY_NEXT = "suivant"
+TRIGGER_TTS = "branle moi"
 AFTER_WAKE_TIMEOUT = 3.5
 
 MP3_PATH = Path("bip.mp3")
 BIP_OK_PATH = Path("bipok.mp3")
 MODEL_PATH = Path("vosk-model-small-fr-0.22")
 
-# ──────────────── 4️⃣ Gestion des mises à jour ────────────────
+# ──────────────── 4️⃣ Initialisation TTS ────────────────
+tts_engine = pyttsx3.init()
+
+# ──────────────── 5️⃣ Gestion des mises à jour ────────────────
 def download_file(url, dest):
     dest = Path(dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +125,7 @@ def check_for_updates():
     except requests.RequestException:
         print("Aucune connexion ou impossible de vérifier les mises à jour. Continuation offline...")
 
-# ──────────────── 5️⃣ Configuration du micro ────────────────
+# ──────────────── 6️⃣ Configuration du micro ────────────────
 if CONFIG_FILE.exists():
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
         config = json.load(f)
@@ -139,7 +144,7 @@ if "mic_index" not in config:
 else:
     mic_index = config["mic_index"]
 
-# ──────────────── 6️⃣ Téléchargement modèle Vosk si absent ────────────────
+# ──────────────── 7️⃣ Téléchargement modèle Vosk si absent ────────────────
 if not MODEL_PATH.exists():
     zip_path = MODEL_PATH.with_suffix(".zip")
     print(f"Téléchargement modèle depuis {MODEL_URL}")
@@ -149,7 +154,7 @@ if not MODEL_PATH.exists():
     os.remove(zip_path)
     print("Modèle prêt à l'emploi.")
 
-# ──────────────── 7️⃣ Initialisation Vosk ────────────────
+# ──────────────── 8️⃣ Initialisation Vosk ────────────────
 model = Model(str(MODEL_PATH))
 recognizer = KaldiRecognizer(model, 16000)
 q = queue.Queue()
@@ -173,7 +178,7 @@ def listen_for_phrase(timeout=3):
         res = json.loads(recognizer.FinalResult())
         return res.get("text", "").lower()
 
-# ──────────────── 8️⃣ Boucle principale ────────────────
+# ──────────────── 9️⃣ Boucle principale ────────────────
 def main():
     print("🎙 Assistant prêt. Dites 'Ok Garmin'.")
     state = "idle"
@@ -221,11 +226,17 @@ def main():
                     playsound(str(BIP_OK_PATH))
                     state = "idle"
 
+                elif TRIGGER_TTS in cmd:
+                    print("Commande détectée → TTS")
+                    tts_engine.say("Bah alors tu veut te faire branler mon coquin hoo je vois")
+                    tts_engine.runAndWait()
+                    playsound(str(BIP_OK_PATH))
+                    state = "idle"
+
                 else:
                     print(f"Commande inconnue : {cmd}")
 
-# ──────────────── 9️⃣ Démarrage ────────────────
+# ──────────────── 🔟 Démarrage ────────────────
 if __name__ == "__main__":
     check_for_updates()
     main()
-
