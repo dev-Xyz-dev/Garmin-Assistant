@@ -3,7 +3,7 @@ import os
 import subprocess
 
 # ──────────────── 1️⃣ Installer les dépendances manquantes ────────────────
-required_modules = ["keyboard", "playsound==1.2.2", "sounddevice", "vosk", "requests","pyaudio"]
+required_modules = ["keyboard", "playsound", "sounddevice", "vosk", "requests", "pyaudio"]
 for module in required_modules:
     try:
         __import__(module)
@@ -59,6 +59,8 @@ CONFIG_FILE = Path("config.json")
 TRIGGER_WAKE = "garmin"
 TRIGGER_CLIP = "la vidéo"
 TRIGGER_SNAP = "pornhub"
+TRIGGER_SPOTIFY_PLAY = "pause"
+TRIGGER_SPOTIFY_NEXT = "suivant"
 AFTER_WAKE_TIMEOUT = 3.5
 
 MP3_PATH = Path("bip.mp3")
@@ -200,11 +202,25 @@ def main():
                     keyboard.press_and_release('=')
                     playsound(str(BIP_OK_PATH))
                     state = "idle"
+
                 elif TRIGGER_SNAP in cmd:
                     print("Commande détectée → ouverture Ph")
                     webbrowser.open("https://pornhub.com")
                     playsound(str(BIP_OK_PATH))
                     state = "idle"
+
+                elif TRIGGER_SPOTIFY_PLAY in cmd:
+                    print("Commande détectée → Spotify Play/Pause")
+                    keyboard.send("play/pause media")
+                    playsound(str(BIP_OK_PATH))
+                    state = "idle"
+
+                elif TRIGGER_SPOTIFY_NEXT in cmd:
+                    print("Commande détectée → Spotify Suivant")
+                    keyboard.send("next track")
+                    playsound(str(BIP_OK_PATH))
+                    state = "idle"
+
                 else:
                     print(f"Commande inconnue : {cmd}")
 
@@ -212,5 +228,3 @@ def main():
 if __name__ == "__main__":
     check_for_updates()
     main()
-
-
